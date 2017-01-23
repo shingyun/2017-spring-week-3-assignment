@@ -1,0 +1,38 @@
+html,body,h1,h2,h3,h4,h4,p,div,a{
+	margin:0;
+	padding:0;
+}
+
+body{
+	background:rgb(252,252,252);
+}
+
+.plot{
+	min-height:300px;
+}
+.plot-col-6{
+	width:50%;
+	float:left;
+}
+
+/* line and area chart */
+.time-series .line{
+	fill:none;
+	stroke:rgb(80,80,80);
+	stroke-width:1.5px;
+}
+.time-series .area{
+	fill-opacity:.03;
+}
+.time-series .axis-y line{
+	stroke:white;
+}
+
+/* pie chart */
+.pie-chart .slice path{
+	fill:rgb(220,220,220);
+}
+.pie-chart .slice text{
+	font-size:12px;
+	fill:rgb(80,80,80);
+}
