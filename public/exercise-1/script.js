@@ -19,24 +19,41 @@ d3.queue()
 
 function dataLoaded(err,trips,stations){
 	//Create a crossfilter with trips
+    //console.log(trips);
 
+    var cf = crossfilter(trips);
 	//Create a dimension on bike_nr
-
+    var tripsByBike = cf.dimension(function(d){return d.bike_nr});
 	//Create a dimension on time of the day 
+    var tripsByTime = cf.dimension(function(d){return d.startTime.getHours()+d.startTime.getMinutes()/60});
 		//Hint: the API for crossfilter dimension requires an accessor function argument
 		//crossfilter.dimension(function(d){return ...})
 		//Within this accessor function, use Date.getHours() and Date.getMinutes() to convert a Date object to a time of the day
 
 	//Using console.log, log out the answer to the following questions
 	//What % of trips take place between 5PM and 8PM?
-
+    var timeTotal = cf.size(); //trips.crossfilter.size() = trips.length
+    tripsByTime.filterRange(['17','20']);
+    var time17_20 = tripsByTime.top(Infinity).length;
+    console.log('Between 5pm-8pm: '+time17_20/timeTotal*100+'%');
 	//What % of trips take place before 9AM and after 5PM?
-
+    tripsByTime.filterRange(['9','17']);
+    var time9_17 = tripsByTime.top(Infinity).length;
+    console.log('Before 9am After 5 pm: '+ (timeTotal-time9_17)/timeTotal*100+'%');
 	//How many trips were taken with each unique bike_nr? Which bike has the highest number of trip count?
 		//This will require the use dimension.group
-
+    tripsByTime.filterAll();
+    var tripsByBikeGroup = tripsByBike.group().top(Infinity);
+    console.log('How many trips were taken with each unique bike_nr?')
+    console.log(tripsByBikeGroup);
+    console.log('Bike"'+tripsByBikeGroup[0].key+'" has the highest number of trip count');
 	//How much travel time was logged on each unique bike_nr? Which bike has the highest travel time logged?
 		//This will require the use dimension.group, but with a different reduce function
+    var topDurationByBike = tripsByBike.group().reduceSum(function(d){return d.duration;});
+    console.log('How much travel time was logged on each unique bike_nr?');
+    console.log(topDurationByBike.top(Infinity));
+    console.log(topDurationByBike.top(1)[0].key+' has the highest travel time logged.');
+
 
 }
 
