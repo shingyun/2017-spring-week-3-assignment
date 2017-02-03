@@ -36,6 +36,7 @@ function drawTimeOfDay(arr,div){
 		.append('g')
 		.attr('class','canvas time-series')
 		.attr('transform','translate('+m.l+','+m.t+')');
+    
 
 	//Use histogram to transform data
 	var histogramTime = d3.histogram()
@@ -107,10 +108,22 @@ function drawTimeOfDay(arr,div){
 		console.log('selected range of the brush (in terms of screen pixels) is ' + d3.event.selection);
 		console.log('selected range of the brush (in terms of time of day) is ' + d3.event.selection.map(scaleX.invert));
 
-/*		Exercise 2 part 1:
+/*		
+        Exercise 2 part 1:
 		With the selected range of the brush, update the crossfilter
 		and then update the userType and userGender pie charts
-*/	}
+*/
+        var brushedArea = d3.event.selection.map(scaleX.invert);
+        console.log(brushedArea);
+        var brushedAreaFilter = crossfilter(arr)
+            .dimension(function(d){ return d.startTime.getHours()+d.startTime.getMinutes()/60 })
+            .filterRange(brushedArea)
+            .top(Infinity);
+
+        console.log(brushedAreaFilter);
+        drawUserType(brushedAreaFilter, plot2);
+
+	}
 
 }
 
@@ -123,7 +136,9 @@ function drawUserType(arr,div){
 		.attr('height', h + m.t + m.b)
 		.append('g')
 		.attr('class','canvas')
-		.attr('transform','translate('+m.l+','+m.t+')');
+		.attr('transform','translate('+m.l+','+m.t+')')
+		  .append('g').attr('class','pie-chart')
+	      .attr('transform','translate('+w/2+','+h/2+')');
 
 	//Transform data
 	var tripsByUserType = d3.nest()
@@ -143,26 +158,50 @@ function drawUserType(arr,div){
 	//Draw
 /*	Exercise 2 part 2: this part of the code does not account for the update and exit sets
 	Refractor this code to account for the update and exit sets
-*/	var slices = plot
-		.append('g').attr('class','pie-chart')
-		.attr('transform','translate('+w/2+','+h/2+')')
-		.selectAll('.slice')
-		.data( pie(tripsByUserType) )
-		.enter()
-		.append('g').attr('class','slice');
-	slices
-		.append('path')
-		.attr('d',arc)
-		.style('fill',function(d,i){
-			return i===0?'#03afeb':null
-		});
-	slices
-		.append('text')
-		.text(function(d){return d.data.key})
-		.attr('transform',function(d){
-			var angle = (d.startAngle+d.endAngle)*180/Math.PI/2 - 90;
-			return 'rotate('+angle+')translate('+((Math.min(w,h)/2)+20)+')';
-		});
+*/	
+
+
+    var pieData = pie(tripsByUserType)
+
+    var updateSlices = plot
+        .selectAll('.slice')
+        .data(pieData, function(d){console.log(d.data.key);  return d.data.key;});
+
+    var enterSlices = updateSlices.enter()
+        .append('g').attr('class','slice')
+        .append('path');
+    
+    enterSlices.merge(updateSlices)
+        .attr('d',arc)
+        .style('fill',function(d,i){
+	 		return i===0?'#03afeb':null
+	 	});
+   
+     updateSlices.exit().remove();
+    
+
+ //    var slices = plot
+	// 	.append('g').attr('class','pie-chart')
+	// 	.attr('transform','translate('+w/2+','+h/2+')')
+	// 	.selectAll('.slice')
+	// 	.data( pie(tripsByUserType) )
+	// 	.enter()
+	// 	.append('g').attr('class','slice');
+	
+	// slices
+	// 	.append('path')
+	// 	.attr('d',arc)
+	// 	.style('fill',function(d,i){
+	// 		return i===0?'#03afeb':null
+	// 	});
+	
+	// slices
+	// 	.append('text')
+	// 	.text(function(d){return d.data.key})
+	// 	.attr('transform',function(d){
+	// 		var angle = (d.startAngle+d.endAngle)*180/Math.PI/2 - 90;
+	// 		return 'rotate('+angle+')translate('+((Math.min(w,h)/2)+20)+')';
+	// 	});
 }
 
 function drawUserGender(arr,div){
@@ -177,7 +216,59 @@ function drawUserGender(arr,div){
 		.attr('transform','translate('+m.l+','+m.t+')');
 
 /*	Exercise 2 part 3: can you complete the user gender pie chart?
-*/}
+*/
+
+
+    var tripsNestByGenter = d3.nest()
+        .key(function(d){ 
+        	if(d.userGender!=='undefined'){ return d.userGender;
+        	}else{
+        		return;
+        	};})
+        .rollup(function(leaves){return leaves.length})
+        .entries(arr);
+
+   console.log(tripsNestByGenter);
+
+    var pie = d3.pie()
+        .value(function(d){return d.value});
+
+    var arc = d3.arc()
+        .innerRadius(5)
+        .outerRadius(Math.min(w,h)/2);
+
+    var slices = plot.append('g').attr('class','pie-chart')
+        .attr('transform','translate('+w/2+','+h/2+')')
+        .selectAll('.slices')
+        .data(pie(tripsNestByGenter))
+        .enter()
+        .append('g').attr('class','slices')
+
+    slices
+        .append('path')
+        .attr('d',arc)
+        .style('stroke-width','1px')
+        .style('stroke','white');
+
+	// //Transform data
+	// var tripsByUserType = d3.nest()
+	// 	.key(function(d){return d.userType})
+	// 	.rollup(function(leaves){return leaves.length})
+	// 	.entries(arr);
+	// console.log(tripsByUserType);
+
+	// //Further transform data to ready it for a pie layout
+	// var pie = d3.pie()
+	// 	.value(function(d){return d.value});
+	// console.log( pie(tripsByUserType) );
+	// var arc = d3.arc()
+	// 	.innerRadius(5)
+	// 	.outerRadius(Math.min(w,h)/2);
+
+
+
+
+}
 
 function parseTrips(d){
 	return {
