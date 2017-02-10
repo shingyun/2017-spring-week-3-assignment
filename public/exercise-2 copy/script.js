@@ -8,7 +8,15 @@ var plot1 = plots.filter(function(d,i){ return i===0;}),
 	plot2 = plots.filter(function(d,i){return i===1}),
 	plot3 = plots.filter(function(d,i){return i===2});
 
+var timePlot = plot1.append('svg')
+    .attr('width', w + m.l + m.r)
+ 	.attr('height', h + m.t + m.b);
 
+var piePlot = plot2.append('svg')
+    .attr('width', w + m.l + m.r)
+ 	.attr('height', h + m.t + m.b)
+ 	.append('g').attr('class','pie-chart')
+    .attr('transform','translate('+w/2+','+h/2+')');;
 
 d3.queue()
 	.defer(d3.csv,'../data/hubway_trips_reduced.csv',parseTrips)
@@ -22,23 +30,23 @@ function dataLoaded(err,trips,stations){
 		tripsByGender = cf.dimension(function(d){return d.userGender}),
 		tripsByUserType = cf.dimension(function(d){return d.userType});
 
-
-	drawTimeOfDay(tripsByGender.top(Infinity), plot1,tripsByTimeOfDay);
-	drawUserType(tripsByGender.top(Infinity), plot2);
-	drawUserGender(tripsByGender.top(Infinity), plot3);
+	drawTimeOfDay(tripsByGender.top(Infinity));
+	drawUserType(tripsByGender.top(Infinity));
+	drawUserGender(tripsByGender.top(Infinity));
 }
 
-function drawTimeOfDay(arr,div, dimension){
+function drawTimeOfDay(arr){
 	//calculate w, h; append <svg> and <g> for plot area
-	var w = div.node().clientWidth - m.l - m.r,
-		h = div.node().clientHeight - m.t - m.b;
-	var plot = div
-		.append('svg')
-		.attr('width', w + m.l + m.r)
-		.attr('height', h + m.t + m.b)
-		.append('g')
-		.attr('class','canvas time-series')
-		.attr('transform','translate('+m.l+','+m.t+')');
+	// var w = div.node().clientWidth - m.l - m.r,
+	// 	h = div.node().clientHeight - m.t - m.b;
+	// var plot = div
+	// 	.append('svg')
+	// 	.attr('width', w + m.l + m.r)
+	// 	.attr('height', h + m.t + m.b)
+	var timePlot2 = timePlot
+	    .append('g')
+	    .attr('class','canvas time-series')
+	    .attr('transform','translate('+m.l+','+m.t+')');
     
 
 	//Use histogram to transform data
@@ -79,15 +87,15 @@ function drawTimeOfDay(arr,div, dimension){
 		.tickSize(-w);
 
 	//Represent
-	plot.append('path').attr('class','area')
+	timePlot2.append('path').attr('class','area')
 		.datum(binTimeOfDay)
 		.attr('d',area);
-	plot.append('g').attr('class','axis axis-y')
+	timePlot2.append('g').attr('class','axis axis-y')
 		.call(axisY);
-	plot.append('path').attr('class','line')
+	timePlot2.append('path').attr('class','line')
 		.datum(binTimeOfDay)
 		.attr('d',line);
-	var axisXNode = plot.append('g').attr('class','axis axis-x')
+	var axisXNode = timePlot2.append('g').attr('class','axis axis-x')
 		.attr('transform','translate(0,'+h+')')
 		.call(axisX);
 	axisXNode.selectAll('.tick').selectAll('text')
@@ -98,7 +106,7 @@ function drawTimeOfDay(arr,div, dimension){
 	var brush = d3.brushX()
 		.on('end',brushend)
 
-	plot.append('g').attr('class','brush')
+	timePlot2.append('g').attr('class','brush')
 		.call(brush);
 
 	function brushend(){
@@ -124,37 +132,30 @@ function drawTimeOfDay(arr,div, dimension){
             .top(Infinity);
 
         console.log(brushedAreaFilter);
-        drawUserType(brushedAreaFilter, plot2);
-        drawUserGender(brushedAreaFilter, plot3)
-
-        //Siqi
-     //    dimention.filter(d3.event.selection.map(scaleX.invert));
-     //    drawUserType(dimention.top(Infinity), plot2);
-	    // drawUserGender(dimention.top(Infinity), plot3);
+        drawUserType(brushedAreaFilter);
 
 	}
 
 }
 
-function drawUserType(arr,div){
-	var w = div.node().clientWidth - m.l - m.r,
-		h = div.node().clientHeight - m.t - m.b;
-
-    // var plot = div
+function drawUserType(arr){
+	// var w = div.node().clientWidth - m.l - m.r,
+	// 	h = div.node().clientHeight - m.t - m.b;
+	// var plot = div
 	// 	.append('svg')
 	// 	.attr('width', w + m.l + m.r)
 	// 	.attr('height', h + m.t + m.b)
 	// 	.append('g')
 	// 	.attr('class','canvas')
-	// 	.attr('transform','translate('+m.l+','+m.t+')');
-    
+	// 	.attr('transform','translate('+m.l+','+m.t+')')
+	// 	  .append('g').attr('class','pie-chart')
+	//       .attr('transform','translate('+w/2+','+h/2+')');
 
 	//Transform data
 	var tripsByUserType = d3.nest()
 		.key(function(d){return d.userType})
 		.rollup(function(leaves){return leaves.length})
 		.entries(arr);
-
 	console.log(tripsByUserType);
 
 	//Further transform data to ready it for a pie layout
@@ -170,87 +171,24 @@ function drawUserType(arr,div){
 	Refractor this code to account for the update and exit sets
 */	
 
-    var plot = div
-		.selectAll('svg')
-		.data([1]);
-
-	var plotEnter = plot.enter()
-		.append('svg')
-		.attr('width', w + m.l + m.r)
-		.attr('height', h + m.t + m.b)
-		.append('g')
-		.attr('transform','translate('+m.l+','+m.t+')');
-  
-    plotEnter.merge(plot);
-
-    var chart = plotEnter.merge(plot)
-        .selectAll('.pie-chart')
-        .data([1]);
-
-    var chartEnter = chart.enter()
-        .append('g')
-        .attr('class','pie-chart');
-
-    chartEnter
-        .merge(chart)
-        .attr('transform','translate('+w/2+','+h/2+')');
-
-    var slice = chartEnter.merge(chart)
+    var slices = piePlot
         .selectAll('.slice')
         .data(pie(tripsByUserType));
 
-    var sliceEnter = slice.enter()
-        .append('g')
-        .attr('class','slice');
-
-    sliceEnter.append('path');
-    sliceEnter.append('text');
- 
-    sliceEnter.merge(slice)
-        .select('path')
+    var pieUpdate = slices.enter()
+        .append('g').attr('class','slice')
+        .merge(slices);
+        
+    pieUpdate
+        .append('path')
         .attr('d',arc)
         .style('fill',function(d,i){
 	 		return i===0?'#03afeb':null
 	 	});
 
-    sliceEnter.merge(slice)
-        .select('text')
-        .text(function(d){return d.data.key;})
-        .attr('transform',function(d){
-			var angle = (d.startAngle+d.endAngle)*180/Math.PI/2 - 90;
-	 		return 'rotate('+angle+')translate('+((Math.min(w,h)/2)+20)+')';
-	 	});
-
-    plot.exit().remove();
-    chart.exit().remove();
-    slice.exit().remove();
-
-
-    //Siqi
-    // var chartContainer = plot.selectAll('.pie-chart')
-    //     .data([1]);
-    // var chartContainerEnter = chartContainer.enter().append('g')
-    //     .attr('calss','pie-chart')
-
-
-   //original code
-   //  var pieData = pie(tripsByUserType)
-
-   //  var updateSlices = plot
-   //      .selectAll('.slice')
-   //      .data(pieData, function(d){console.log(d.data.key);  return d.data.key;});
-
-   //  var enterSlices = updateSlices.enter()
-   //      .append('g').attr('class','slice')
-   //      .append('path');
+    slices.exit().remove();
+     
     
-   //  enterSlices.merge(updateSlices)
-   //      .attr('d',arc)
-   //      .style('fill',function(d,i){
-	 	// 	return i===0?'#03afeb':null
-	 	// });
-   
- 
 
  //    var slices = plot
 	// 	.append('g').attr('class','pie-chart')
@@ -276,9 +214,9 @@ function drawUserType(arr,div){
 	// 	});
 }
 
-function drawUserGender(arr,div){
-	var w = div.node().clientWidth - m.l - m.r,
-		h = div.node().clientHeight - m.t - m.b;
+function drawUserGender(arr){
+	// var w = div.node().clientWidth - m.l - m.r,
+	// 	h = div.node().clientHeight - m.t - m.b;
 	// var plot = div
 	// 	.append('svg')
 	// 	.attr('width', w + m.l + m.r)
@@ -290,18 +228,17 @@ function drawUserGender(arr,div){
 /*	Exercise 2 part 3: can you complete the user gender pie chart?
 */
 
-    console.log(arr);
 
-    var tripsByGender = d3.nest()
-        .key(function(d){ return d.userGender; })
+    var tripsNestByGenter = d3.nest()
+        .key(function(d){ 
+        	if(d.userGender!=='undefined'){ return d.userGender;
+        	}else{
+        		return;
+        	};})
         .rollup(function(leaves){return leaves.length})
         .entries(arr);
 
-    console.log(tripsByGender);
-
-   tripsByGender = tripsByGender.splice(1,2);
-
-   console.log(tripsByGender);
+   console.log(tripsNestByGenter);
 
     var pie = d3.pie()
         .value(function(d){return d.value});
@@ -310,64 +247,18 @@ function drawUserGender(arr,div){
         .innerRadius(5)
         .outerRadius(Math.min(w,h)/2);
 
-    var plot = div
-		.selectAll('svg')
-		.data([1]);
+    var slices = plot.append('g').attr('class','pie-chart')
+        .attr('transform','translate('+w/2+','+h/2+')')
+        .selectAll('.slices')
+        .data(pie(tripsNestByGenter))
+        .enter()
+        .append('g').attr('class','slices')
 
-	var plotEnter = plot.enter()
-		.append('svg')
-		.attr('width', w + m.l + m.r)
-		.attr('height', h + m.t + m.b)
-		.append('g')
-		.attr('transform','translate('+m.l+','+m.t+')');
-
-    var chart = plotEnter.merge(plot)
-        .selectAll('.pie-chart')
-        .data([1]);
-
-    var chartEnter = chart.enter()
-        .append('g')
-        .attr('class','pie-chart');
-
-    chartEnter
-        .merge(chart)
-        .attr('transform','translate('+w/2+','+h/2+')');
-
-    var slice = chartEnter.merge(chart)
-        .selectAll('.slice')
-        .data(pie(tripsByGender));
-
-    var sliceEnter = slice.enter()
-        .append('g')
-        .attr('class','slice');
-
-    sliceEnter.append('path');
- 
-    sliceEnter.merge(slice)
-        .select('path')
+    slices
+        .append('path')
         .attr('d',arc)
-        .style('fill',function(d,i){
-	 		return i===0?'#03afeb':'#FFC0CB'
-	 	});
-
-    plot.exit().remove();
-    chart.exit().remove();
-    slice.exit().remove();
-
-
-
-    // var slices = plot.append('g').attr('class','pie-chart')
-    //     .attr('transform','translate('+w/2+','+h/2+')')
-    //     .selectAll('.slices')
-    //     .data(pie(tripsByGender))
-    //     .enter()
-    //     .append('g').attr('class','slices');
-
-    // slices
-    //     .append('path')
-    //     .attr('d',arc)
-    //     .style('stroke-width','1px')
-    //     .style('stroke','white');
+        .style('stroke-width','1px')
+        .style('stroke','white');
 
 
 }
