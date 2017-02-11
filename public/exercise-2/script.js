@@ -170,32 +170,22 @@ function drawUserType(arr,div){
 	Refractor this code to account for the update and exit sets
 */	
 
-    var plot = div
+    var svg = div
 		.selectAll('svg')
 		.data([1]);
 
-	var plotEnter = plot.enter()
+	var svgEnter = svg.enter()
 		.append('svg')
 		.attr('width', w + m.l + m.r)
-		.attr('height', h + m.t + m.b)
+		.attr('height', h + m.t + m.b);
+
+    svgEnter
 		.append('g')
-		.attr('transform','translate('+m.l+','+m.t+')');
-  
-    plotEnter.merge(plot);
+		.attr('class','pie-chart')
+		.attr('transform','translate('+(m.l+w/2) +','+(m.t+h/2)+')');
 
-    var chart = plotEnter.merge(plot)
-        .selectAll('.pie-chart')
-        .data([1]);
 
-    var chartEnter = chart.enter()
-        .append('g')
-        .attr('class','pie-chart');
-
-    chartEnter
-        .merge(chart)
-        .attr('transform','translate('+w/2+','+h/2+')');
-
-    var slice = chartEnter.merge(chart)
+    var slice = svgEnter.merge(svg).select('.pie-chart')
         .selectAll('.slice')
         .data(pie(tripsByUserType));
 
@@ -221,8 +211,7 @@ function drawUserType(arr,div){
 	 		return 'rotate('+angle+')translate('+((Math.min(w,h)/2)+20)+')';
 	 	});
 
-    plot.exit().remove();
-    chart.exit().remove();
+    svg.exit().remove();
     slice.exit().remove();
 
 
@@ -310,30 +299,22 @@ function drawUserGender(arr,div){
         .innerRadius(5)
         .outerRadius(Math.min(w,h)/2);
 
-    var plot = div
+    var svg = div
 		.selectAll('svg')
 		.data([1]);
 
-	var plotEnter = plot.enter()
+	var svgEnter = svg.enter()
 		.append('svg')
 		.attr('width', w + m.l + m.r)
-		.attr('height', h + m.t + m.b)
+		.attr('height', h + m.t + m.b);
+
+    svgEnter
 		.append('g')
-		.attr('transform','translate('+m.l+','+m.t+')');
+		.attr('class','pie-chart')
+		.attr('transform','translate('+(m.l+w/2) +','+(m.t+h/2)+')');
 
-    var chart = plotEnter.merge(plot)
-        .selectAll('.pie-chart')
-        .data([1]);
 
-    var chartEnter = chart.enter()
-        .append('g')
-        .attr('class','pie-chart');
-
-    chartEnter
-        .merge(chart)
-        .attr('transform','translate('+w/2+','+h/2+')');
-
-    var slice = chartEnter.merge(chart)
+    var slice = svgEnter.merge(svg).select('.pie-chart')
         .selectAll('.slice')
         .data(pie(tripsByGender));
 
@@ -342,16 +323,24 @@ function drawUserGender(arr,div){
         .attr('class','slice');
 
     sliceEnter.append('path');
+    sliceEnter.append('text');
  
     sliceEnter.merge(slice)
         .select('path')
         .attr('d',arc)
         .style('fill',function(d,i){
-	 		return i===0?'#03afeb':'#FFC0CB'
+	 		return i===0?'#03afeb':null
 	 	});
 
-    plot.exit().remove();
-    chart.exit().remove();
+    sliceEnter.merge(slice)
+        .select('text')
+        .text(function(d){return d.data.key;})
+        .attr('transform',function(d){
+			var angle = (d.startAngle+d.endAngle)*180/Math.PI/2 - 90;
+	 		return 'rotate('+angle+')translate('+((Math.min(w,h)/2)+20)+')';
+	 	});
+
+    svg.exit().remove();
     slice.exit().remove();
 
 
